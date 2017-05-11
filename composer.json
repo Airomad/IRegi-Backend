@@ -1,0 +1,6 @@
+{
+    "require": {
+        "voku/simple-mysqli": "4.*",
+        "kint-php/kint": "^2.0"
+    }
+}
