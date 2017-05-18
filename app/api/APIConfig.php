@@ -13,7 +13,7 @@ define("DATABASE_USER",             "__INSERT_HERE__");
 define("DATABASE_PASSWORD",         "__INSERT_HERE__");
 
 define("TOKEN_UPDATE_EACH_MINUTES", 1);
-define("SESSION_MAX_TIME_MINUTES",  30);
+define("SESSION_MAX_TIME_MINUTES",  5);
 define("IS_DEBUG",                  true);
 
 ?>

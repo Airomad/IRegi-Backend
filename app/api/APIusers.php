@@ -178,24 +178,27 @@ class APIusers extends APIBase {
             if (property_exists($data, "session")) {
                 $session = trim($data->session);
                 $result = $this->db->query("SELECT * FROM `sessions` WHERE `session` = '$session'");
-                d($result);
                 if ($result->num_rows > 0) {
                     // SESSION IS VALID
-                    $user_id = $result->fetchArray()["user_id"];
-                    $result = $this->db->query("UPDATE `sessions` SET `last_update` = now() WHERE `session` = '$session'");
-                    if ($result) {
-                        $this->putResponseSuccess();
-                        return;
+                    $sessionData = $result->fetchArray();
+                    if (!APIUtils::isTimeOver($sessionData["last_update"])) {
+                        $user_id = $result->fetchArray()["user_id"];
+                        $result = $this->db->query("UPDATE `sessions` SET `last_update` = now() WHERE `session` = '$session'");
+                        if ($result) {
+                            $this->putResponseSuccess();
+                            return;
+                        } else {
+                            $this->putResponseError();
+                            $this->putResponseErrorElement("SESSION_INTERNAL_ERROR");
+                            return;
+                        }
                     } else {
-                        $this->putResponseError();
-                        $this->putResponseErrorElement("SESSION_INTERNAL_ERROR");
-                        return;
+                        $result = $this->db->query("DELETE FROM `sessions` WHERE `session` = '$session'");
                     }
-                } else {
-                    $this->putResponseError();
-                    $this->putResponseErrorElement("SESSION_INVALID_ERROR");
-                    return;
                 }
+                $this->putResponseError();
+                $this->putResponseErrorElement("SESSION_INVALID_ERROR");
+                return;
             } else if (property_exists($data, "token")) {
                 // TOKEN
                 $token = trim($data->token);
