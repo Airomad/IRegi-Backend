@@ -11,6 +11,8 @@ class APIusers extends APIBase {
         $this->registerMethod(new APIMethod("auth", true));
         $this->registerMethod(new APIMethod("ping", true));
         $this->registerMethod(new APIMethod("getToken", true));
+        $this->registerMethod(new APIMethod("logout", true));
+        $this->registerMethod(new APIMethod("clearToken", true));
     }
 
     /*
@@ -259,6 +261,66 @@ class APIusers extends APIBase {
             $this->putResponseError();
             $this->putResponseErrorElement("USER_AUTH_ERROR");
             return;
+        }
+        $this->putResponseError();
+        $this->putResponseErrorElement("INPUT_DATA_INVALID_ERROR");
+    }
+
+    /*
+    *  Deletes a Session key for specific User.
+    *  Required input data:
+    *       session: string
+    *
+    *  Return: Success status or Error code
+    */
+    public function logout($data) {
+        $isDataValid = APIUtils::checkInputProperties($data, ["session"]);
+        if ($isDataValid) {
+            $session = trim($data->session);
+            $result = $this->db->query("SELECT * FROM `sessions` WHERE `session` = '$session'");
+            if ($result->num_rows > 0) {
+                $result = $this->db->query("DELETE FROM `sessions` WHERE `session` = '$session'");
+                if (!$result) {
+                    $this->putResponseError();
+                    $this->putResponseErrorElement("SESSION_INTERNAL_ERROR");
+                    return;
+                }
+            }
+            $this->putResponseSuccess();
+            return;
+        }
+        $this->putResponseError();
+        $this->putResponseErrorElement("INPUT_DATA_INVALID_ERROR");
+    }
+
+    /*
+    *  Deletes a Token key for specific User.
+    *  Required input data:
+    *       session: string <OR> token: string
+    *
+    *  Return: Success status or Error code
+    */
+    public function clearToken($data) {
+        $isDataValid = APIUtils::checkInputProperties($data, ["session|token"]);
+        if ($isDataValid) {
+            if (property_exists($data, "session")) {
+                $session = trim($data->session);
+                $result = $this->db->query("SELECT * FROM `sessions` WHERE `session` = '$session'");
+                if ($result->num_rows > 0) {
+                    $user_id = $result->fetchArray()["user_id"];
+                    $result = $this->db->query("DELETE FROM `tokens` WHERE `user_id` = '$user_id'");
+                    $this->putResponseSuccess();
+                    return;
+                }
+                $this->putResponseError();
+                $this->putResponseErrorElement("SESSION_INVALID_ERROR");
+                return;
+            } else if (property_exists($data, "token")) {
+                $token = trim($data->token);
+                $result = $this->db->query("DELETE FROM `tokens` WHERE `token` = '$token'");
+                $this->putResponseSuccess();
+                return;
+            }
         }
         $this->putResponseError();
         $this->putResponseErrorElement("INPUT_DATA_INVALID_ERROR");
